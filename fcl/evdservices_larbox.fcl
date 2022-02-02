@@ -1,0 +1,107 @@
+#include "evdservices_base.fcl"
+#include "messageservice.fcl"
+#include "seedservice.fcl"
+#include "magfield_larsoft.fcl"
+#include "geometry.fcl"
+#include "larproperties_lartpcdetector.fcl"
+#include "detectorproperties_lartpcdetector.fcl"
+#include "detectorclocks_lartpcdetector.fcl"
+#include "databaseutil.fcl"
+#include "spacecharge.fcl"
+#include "simulationservices.fcl"
+#include "larfft.fcl"
+#include "singles.fcl"
+#include "largeantmodules.fcl"
+#include "detsimmodules.fcl"
+
+BEGIN_PROLOG
+
+larbox_colordrawingopt:                       @local::standard_colordrawingopt
+larbox_rawdrawingopt:                         @local::standard_rawdrawingopt
+larbox_recodrawingopt: {
+  @table::standard_recodrawingopt
+  
+  # override product labels; these follow the ones from standard_reco_larbox_basic.fcl v. 1.2
+ HitModuleLabels:           ["gaushit"]         # list of module labels in which to look for recob::Hits
+ EndPoint2DModuleLabels:    ["linecluster"]     # list of module labels in which to look for recob::EndPoint2Ds
+ SpacePointModuleLabels:    ["pmalgtrackmaker"] # list of module labels in which to look for recob::SpacePoints     
+ ProngModuleLabels:         []                  # list of module labels in which to look for recob::Prongs     
+ ClusterModuleLabels:       ["linecluster"]     # list of module labels in which to look for recob::Clusters  
+ PFParticleModuleLabels:    ["pmalgtrackmaker"] # list of module labels in which to look for recob::PFParticles 
+ TrackModuleLabels:         ["pmalgtrackmaker"] # list of module labels in which to look for recob::Tracks     
+ ShowerModuleLabels:        []                  # list of module labels in which to look for recob::Showers    
+ VertexModuleLabels:        []                  # list of module labels in which to look for recob::Vertexs    
+ SeedModuleLabels:          ["pmalgtrackmaker"] # list of module labels in which to look for recob::Seeds  
+ OpFlashModuleLabels:       [""]                # list of module labels in which to look for recob::OpFlashes
+ CosmicTagModuleLabels:     [""]                # list of module labels in which to look for recob::Tracks
+ TrkVtxTrackLabels:         ["pmalgtrackmaker"] # list of track producers for track/vertex associations
+ TrkVtxCosmicLabels:        []                  # list of vertex producers for track/vertex associations
+ TrkVtxFilterLabels:        []                  # list of producers of associations between the two above
+
+} # larbox_recodrawingopt
+
+larbox_analysisdrawingopt:                    @local::standard_analysisdrawingopt
+larbox_simdrawingopt:                         @local::standard_simdrawingopt
+larbox_scanopt:                               @local::standard_scanopt
+larbox_evd:                                   @local::standard_evd
+larbox_infotransfer:                          @local::standard_infotransfer
+
+larbox_evdlayoutopt:                          @local::standard_evdlayoutopt
+larbox_evdlayoutopt.ShowSideBar:              1
+larbox_evdlayoutopt.AutoZoomInterest:         0
+larbox_evdlayoutopt.PrintTotalCharge:         0
+larbox_evdlayoutopt.ShowEndPointSection:      1
+larbox_evdlayoutopt.ShowEndPointMarkers:      1
+larbox_evdlayoutopt.ChangeWire:               1
+
+larbox_rawdrawingopt.TotalTicks: 3400
+
+larbox_disp:                                                                       
+{
+                             @table::standard_geometry_services    # from geometry.fcl
+  LArPropertiesService:      @local::lartpcdetector_properties     # from larproperties_argoneut.fcl
+  DetectorPropertiesService: @local::lartpcdetector_detproperties  # from detectorproperties_lartpcdetector.fcl
+  DetectorClocksService:     @local::lartpcdetector_detectorclocks # from detectorclocks_lartpcdetector.fcl
+  DatabaseUtil:              @local::standard_database             # from databaseutil.fcl
+  LArG4Parameters:           @local::standard_largeantparameters   # from simulationservices.fcl
+  LArVoxelCalculator:        @local::standard_larvoxelcalculator   # from simulationservices.fcl
+  MagneticField:             @local::no_mag_larsoft                # from magfield_larsoft.fcl
+  LArFFT:                    @local::standard_larfft               # from larfft.fcl
+  SpaceChargeService:        @local::standard_spacecharge          # from spacecharge.fcl
+
+  DetPedestal: {
+    service_provider: SIOVDetPedestalService
+    DetPedestalRetrievalAlg: @local::standard_pedestalretrievalalg
+  }
+
+  ChannelStatusService: {
+    service_provider: SimpleChannelStatusService
+    
+    # list of bad channels:
+    BadChannels: []
+    NoisyChannels: [ ]
+  }
+
+  ColorDrawingOptions:                         @local::larbox_colordrawingopt
+  SimulationDrawingOptions:                    @local::larbox_simdrawingopt
+  RawDrawingOptions:                           @local::larbox_rawdrawingopt
+  RecoDrawingOptions:                          @local::larbox_recodrawingopt
+  AnalysisDrawingOptions:                      @local::larbox_analysisdrawingopt
+  EvdLayoutOptions:                            @local::larbox_evdlayoutopt
+  ScanOptions:                                 @local::larbox_scanopt
+  InfoTransfer:                                @local::larbox_infotransfer
+  EventDisplay:                                @local::larbox_evd
+}
+
+larbox_disp.DetPedestal.DetPedestalRetrievalAlg.DefaultCollMean: 0
+larbox_disp.DetPedestal.DetPedestalRetrievalAlg.DefaultIndMean: 0
+
+larbox_disp.RawDrawingOptions.TotalTicks: 9600
+
+#######################################
+
+larbox_graphcluster:                          @local::standard_graphcluster
+
+END_PROLOG
+
+

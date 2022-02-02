@@ -1,0 +1,15 @@
+BEGIN_PROLOG
+
+larbox_simwire: {
+  module_type: Digitization
+  SimChannelLabel: largeant
+  NoiseFreqRandomness: 0.1
+  NoiseScale: 2e-2
+  NoiseFileName:   "larbox_noise.root"
+  NoiseHistoName:   "NoiseFreq"    
+  SignalGain: 4e1
+  SignalFileName: "larbox_response.root"
+  SignalHistoName: "Response"
+}
+
+END_PROLOG

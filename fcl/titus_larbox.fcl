@@ -1,0 +1,15 @@
+#include "geometry.fcl"
+#include "larproperties_lartpcdetector.fcl"
+#include "detectorproperties_lartpcdetector.fcl"
+#include "detectorclocks_lartpcdetector.fcl"
+#include "simulationservices.fcl"
+#include "singles.fcl"
+
+services:
+{
+                             @table::standard_geometry_services    # from geometry.fcl
+  LArPropertiesService:      @local::lartpcdetector_properties     # from larproperties_argoneut.fcl
+  DetectorPropertiesService: @local::lartpcdetector_detproperties  # from detectorproperties_lartpcdetector.fcl
+  DetectorClocksService:     @local::lartpcdetector_detectorclocks # from detectorclocks_lartpcdetector.fcl
+} # services
+

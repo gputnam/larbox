@@ -1,0 +1,33 @@
+#include "evdservices_larbox.fcl"
+
+process_name: EVD
+
+services:
+{
+                @table::larbox_disp
+}
+
+source:
+{
+  module_type: RootInput
+}
+
+
+physics:
+{
+ 
+  analyzers:
+  {
+    evdisp: {module_type: EVD}
+  }
+  
+  evd: [ evdisp ]
+  
+  trigger_paths: []
+  end_paths: [ evd ]
+}
+
+
+services.RawDrawingOptions.MinimumSignal:              10.
+services.SimulationDrawingOptions.SimChannelLabel:     "simdrift"
+
