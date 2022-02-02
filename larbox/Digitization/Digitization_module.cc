@@ -20,13 +20,14 @@
 // Data Objects
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/Simulation/SimChannel.h"
+#include "lardataobj/RecoBase/Wire.h"
 
 // LArSoft stuff
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/GeometryCore.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "nurandom/RandomUtils/NuRandomService.h"
-// #include "lardata/Utilities/LArFFT.h"
+#include "lardata/Utilities/AssociationUtil.h"
 
 // Random numbers
 #include "CLHEP/Random/RandFlat.h"
@@ -86,6 +87,10 @@ private:
   std::vector<double> fSignalShape;
   double fSignalGain;
 
+  // Data output Configuration
+  bool fProduceWires;
+  int fWireROIRange;
+
   // Random numbers
   CLHEP::HepRandomEngine &fEngine;
 
@@ -106,6 +111,8 @@ larbox::Digitization::Digitization(fhicl::ParameterSet const& p)
     fSignalFileName(p.get<std::string>("SignalFileName")),
     fSignalHistoName(p.get<std::string>("SignalHistoName")),
     fSignalGain(p.get<double>("SignalGain")),
+    fProduceWires(p.get<bool>("ProduceWires")),
+    fWireROIRange(p.get<int>("WireROIRange")),
     fEngine(art::ServiceHandle<rndm::NuRandomService>()->createEngine(*this, "HepJamesRandom", "digitization", p, "Seed"))
 {
   // Load the Noise Histogram
@@ -147,6 +154,11 @@ larbox::Digitization::Digitization(fhicl::ParameterSet const& p)
   // Output Info
   produces<std::vector<raw::RawDigit>>();
 
+  if (fProduceWires) {
+    produces<std::vector<recob::Wire>>();
+    produces<art::Assns<raw::RawDigit, recob::Wire>>();
+  }
+
 }
 
 larbox::Digitization::~Digitization() {
@@ -158,6 +170,11 @@ void larbox::Digitization::produce(art::Event& e)
 {
   // Output Data
   std::unique_ptr<std::vector<raw::RawDigit>> digits(new std::vector<raw::RawDigit>);
+  std::unique_ptr<std::vector<recob::Wire>> wires(new std::vector<recob::Wire>);
+  std::unique_ptr<art::Assns<raw::RawDigit, recob::Wire>> assn(new art::Assns<raw::RawDigit, recob::Wire>);
+
+  art::PtrMaker<raw::RawDigit> DigitPtrMaker {e};
+  art::PtrMaker<recob::Wire> WirePtrMaker {e};
 
   // Services
   const geo::GeometryCore *geo = lar::providerFrom<geo::Geometry>(); 
@@ -182,12 +199,16 @@ void larbox::Digitization::produce(art::Event& e)
     std::vector<double> signal(n_time_samples, 0.);
     std::vector<double> charge(n_time_samples, 0.);
 
+    std::vector<int> charge_ticks;
+
     if (simChannel_map.count(c)) { // TODO: suppress channels with no charge?
       const sim::SimChannel &sc = *simChannel_map.at(c);
       for (unsigned tick = 0; tick < n_time_samples; tick++) {
         int tdc = clockData.TPCTick2TDC(tick);     
 
         charge[tick] += sc.Charge(tdc) / fSignalGain;
+
+        charge_ticks.push_back(tick);
       }
 
       MakeSignal(charge, signal);
@@ -198,18 +219,42 @@ void larbox::Digitization::produce(art::Event& e)
     std::vector<short> adcs(n_time_samples, 0);
 
     for (unsigned tick = 0; tick < n_time_samples; tick++) {
-      //if (simChannel_map.count(c))
-      //  std::cout << "Tick: " << tick << " Charge: " << charge[tick] << " Signal: " <<  signal[tick] << " noise: " << noise[tick] << std::endl;
-
       adcs[tick] = std::round(noise[tick] + signal[tick]);
     }
 
     raw::RawDigit d(c, n_time_samples, adcs);
     digits->push_back(d);
 
+    // Make the wire if configured
+    if (fProduceWires) {
+      recob::Wire::RegionsOfInterest_t roiVec;
+      
+      for (int tick: charge_ticks) {
+        std::vector<short> thisrange;
+        std::copy(adcs.begin() + std::max((int)0, tick - fWireROIRange), adcs.begin() + std::min((int)adcs.size(), tick + fWireROIRange), 
+            std::back_inserter(thisrange));
+
+        roiVec.add_range(std::max((int)0, tick - fWireROIRange), std::move(thisrange));
+      }
+
+      recob::Wire w(std::move(roiVec), c, geo->View(c));
+
+      wires->push_back(w);
+
+      art::Ptr<raw::RawDigit> ptr_digit = DigitPtrMaker(digits->size() - 1);
+      art::Ptr<recob::Wire> ptr_wire = WirePtrMaker(wires->size() - 1);
+
+      assn->addSingle(ptr_digit, ptr_wire);
+    }
+
   }
 
   e.put(std::move(digits));
+
+  if (fProduceWires) {
+    e.put(std::move(wires));
+    e.put(std::move(assn));
+  }
 
 }
 
