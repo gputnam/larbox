@@ -272,7 +272,7 @@ void larbox::Digitization::MakeNoise(std::vector<double> &v) {
 
   for (unsigned i = 0; i < noisef.size(); i++) {
     double r = flat.shoot();
-    double thisf = fNoiseSpectrum.at(i) * (1 + fNoiseFreqRandomness * r) * fNoiseScale; 
+    double thisf = fNoiseSpectrum.at(i) * (1 - fNoiseFreqRandomness + 2*fNoiseFreqRandomness * r) * fNoiseScale; 
     double phase = flat.shoot() * 2 * M_PI;
 
     TComplex fc(thisf * cos(phase), thisf * sin(phase));
