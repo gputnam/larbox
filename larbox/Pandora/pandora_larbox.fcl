@@ -1,0 +1,52 @@
+BEGIN_PROLOG
+
+# Copied from sbndcode: pandoramodules_sbnd.fcl
+
+larbox_basicpandora:
+{
+    module_type:                                                    "StandardPandora"
+    GeantModuleLabel:                                               "largeant"
+    HitFinderModuleLabel:                                           "gaushit"
+    EnableMCParticles:                                              false
+    EnableProduction:                                               true
+    EnableLineGaps:                                                 true
+    UseGlobalCoordinates:                                           true
+    UseHitWidths:                                                   true
+    ShouldRunAllHitsCosmicReco:                                     false
+    ShouldRunStitching:                                             false
+    ShouldRunCosmicHitRemoval:                                      false
+    ShouldRunSlicing:                                               false
+    ShouldRunNeutrinoRecoOption:                                    false
+    ShouldRunCosmicRecoOption:                                      false
+    ShouldPerformSliceId:                                           false
+    PrintOverallRecoStatus:                                         false
+}
+
+larbox_pandora:                                                       @local::larbox_basicpandora
+larbox_pandora.ConfigFile:                                            "PandoraSettings_Master_SBND.xml"
+larbox_pandora.ShouldRunAllHitsCosmicReco:                            true
+larbox_pandora.ShouldRunStitching:                                    false # No volume to stitch across
+larbox_pandora.ShouldRunCosmicHitRemoval:                             true
+larbox_pandora.ShouldRunSlicing:                                      true
+larbox_pandora.ShouldRunNeutrinoRecoOption:                           true
+larbox_pandora.ShouldRunCosmicRecoOption:                             true
+larbox_pandora.ShouldPerformSliceId:                                  true
+
+larbox_pandorawriter:                                                 @local::larbox_basicpandora
+larbox_pandorawriter.ConfigFile:                                      "PandoraSettings_Write.xml"
+larbox_pandorawriter.EnableMCParticles:                               true
+larbox_pandorawriter.EnableProduction:                                false
+
+larbox_pandoraTrackCreation:
+{
+    module_type:                                                    "LArPandoraTrackCreation"
+    PFParticleLabel:                                                "pandora"
+}
+
+larbox_pandoraShowerCreation:
+{
+    module_type:                                                    "LArPandoraShowerCreation"
+    PFParticleLabel:                                                "pandora"
+}
+
+END_PROLOG

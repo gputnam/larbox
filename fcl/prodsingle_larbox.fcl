@@ -30,6 +30,7 @@
 
 #include "larbox_digitization.fcl"
 #include "hitfinder.fcl"
+#include "pandora_larbox.fcl"
 
 process_name: SinglesGen
 
@@ -54,9 +55,16 @@ services:
   MagneticField:             @local::no_mag_larsoft                # from magfield_larsoft.fcl
   LArFFT:                    @local::standard_larfft               # from larfft.fcl
   SpaceChargeService:        @local::standard_spacecharge          # from spacecharge.fcl
+
+  ChannelStatusService: {
+    service_provider: SimpleChannelStatusService
+
+    # list of bad channels:
+    BadChannels: []
+    NoisyChannels: [ ]
+  }
   
 } # services
-
 
 # Start each new event with an empty event.
 # Event time stamp is taken from the internal clock of the running node.
@@ -79,16 +87,19 @@ physics:
   producers:
   {
     rns:       { module_type: "RandomNumberSaver" }
-    generator: @local::standard_singlep  # from singles.fcl
-    largeant:  @local::standard_largeant # from largeantmodules.fcl
-    daq:       @local::larbox_simwire # from larbox_digitization.fcl
-    gaushit:   @local::larbox_gaushitfinder
+    generator:     @local::standard_singlep  # from singles.fcl
+    largeant:      @local::standard_largeant # from largeantmodules.fcl
+    daq:           @local::larbox_simwire # from larbox_digitization.fcl
+    gaushit:       @local::larbox_gaushitfinder
+    pandora:       @local::larbox_pandora
+    pandoraTrack:  @local::larbox_pandoraTrackCreation
+    pandoraShower: @local::larbox_pandoraShowerCreation
   } # producers
   
   # Define the producer and filter modules for this path; order matters.
   # Filters reject all following items (none here).
   # See lines starting physics.producers above.
-  simulate:      [ rns, generator, largeant, daq, gaushit]
+  simulate:      [ rns, generator, largeant, daq, gaushit, pandora, pandoraTrack, pandoraShower]
   
   # define the output stream, there could be more than one if using filters
   stream1:       [ out1 ]
