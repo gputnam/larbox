@@ -29,6 +29,7 @@
 #include "detsimmodules.fcl"
 
 #include "larbox_digitization.fcl"
+#include "hitfinder.fcl"
 
 process_name: SinglesGen
 
@@ -81,12 +82,13 @@ physics:
     generator: @local::standard_singlep  # from singles.fcl
     largeant:  @local::standard_largeant # from largeantmodules.fcl
     daq:       @local::larbox_simwire # from larbox_digitization.fcl
+    gaushit:   @local::larbox_gaushitfinder
   } # producers
   
   # Define the producer and filter modules for this path; order matters.
   # Filters reject all following items (none here).
   # See lines starting physics.producers above.
-  simulate:      [ rns, generator, largeant, daq ]
+  simulate:      [ rns, generator, largeant, daq, gaushit]
   
   # define the output stream, there could be more than one if using filters
   stream1:       [ out1 ]
