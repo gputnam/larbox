@@ -1,3 +1,4 @@
+#include "messageservice.fcl"
 #include "geometry.fcl"
 #include "larproperties_lartpcdetector.fcl"
 #include "detectorproperties_lartpcdetector.fcl"
@@ -11,5 +12,6 @@ services:
   LArPropertiesService:      @local::lartpcdetector_properties     # from larproperties_argoneut.fcl
   DetectorPropertiesService: @local::lartpcdetector_detproperties  # from detectorproperties_lartpcdetector.fcl
   DetectorClocksService:     @local::lartpcdetector_detectorclocks # from detectorclocks_lartpcdetector.fcl
+  message:                   @local::standard_info
 } # services
 
