@@ -10,6 +10,7 @@ larbox_simwire: {
   SignalGain: 4e1
   SignalFileName: "larbox_response.root"
   SignalHistoName: "Response"
+  ProduceDigits: true
   ProduceWires: true 
   WireROIRange: 25
 }

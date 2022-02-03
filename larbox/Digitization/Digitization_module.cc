@@ -88,6 +88,7 @@ private:
   double fSignalGain;
 
   // Data output Configuration
+  bool fProduceDigits;
   bool fProduceWires;
   int fWireROIRange;
 
@@ -111,6 +112,7 @@ larbox::Digitization::Digitization(fhicl::ParameterSet const& p)
     fSignalFileName(p.get<std::string>("SignalFileName")),
     fSignalHistoName(p.get<std::string>("SignalHistoName")),
     fSignalGain(p.get<double>("SignalGain")),
+    fProduceDigits(p.get<bool>("ProduceDigits")),
     fProduceWires(p.get<bool>("ProduceWires")),
     fWireROIRange(p.get<int>("WireROIRange")),
     fEngine(art::ServiceHandle<rndm::NuRandomService>()->createEngine(*this, "HepJamesRandom", "digitization", p, "Seed"))
@@ -152,10 +154,15 @@ larbox::Digitization::Digitization(fhicl::ParameterSet const& p)
   fInvFFT->Init("M", 0, NULL);
 
   // Output Info
-  produces<std::vector<raw::RawDigit>>();
+  if (fProduceDigits) {
+    produces<std::vector<raw::RawDigit>>();
+  }
 
   if (fProduceWires) {
     produces<std::vector<recob::Wire>>();
+  }
+
+  if (fProduceDigits && fProduceWires) {
     produces<art::Assns<raw::RawDigit, recob::Wire>>();
   }
 
@@ -208,7 +215,9 @@ void larbox::Digitization::produce(art::Event& e)
 
         charge[tick] += sc.Charge(tdc) / fSignalGain;
 
-        charge_ticks.push_back(tick);
+        if (sc.Charge(tdc) > 1e-4) {
+          charge_ticks.push_back(tick);
+        }
       }
 
       MakeSignal(charge, signal);
@@ -223,7 +232,10 @@ void larbox::Digitization::produce(art::Event& e)
     }
 
     raw::RawDigit d(c, n_time_samples, adcs);
-    digits->push_back(d);
+
+    if (fProduceDigits) {
+      digits->push_back(d);
+    }
 
     // Make the wire if configured
     if (fProduceWires) {
@@ -241,18 +253,25 @@ void larbox::Digitization::produce(art::Event& e)
 
       wires->push_back(w);
 
-      art::Ptr<raw::RawDigit> ptr_digit = DigitPtrMaker(digits->size() - 1);
-      art::Ptr<recob::Wire> ptr_wire = WirePtrMaker(wires->size() - 1);
-
-      assn->addSingle(ptr_digit, ptr_wire);
+      // Make the association if configured
+      if (fProduceDigits) {
+        art::Ptr<raw::RawDigit> ptr_digit = DigitPtrMaker(digits->size() - 1);
+        art::Ptr<recob::Wire> ptr_wire = WirePtrMaker(wires->size() - 1);
+        assn->addSingle(ptr_digit, ptr_wire);
+      }
     }
 
   }
 
-  e.put(std::move(digits));
+  if (fProduceDigits) {
+    e.put(std::move(digits));
+  }
 
   if (fProduceWires) {
     e.put(std::move(wires));
+  }
+
+  if (fProduceDigits && fProduceWires) {
     e.put(std::move(assn));
   }
 
