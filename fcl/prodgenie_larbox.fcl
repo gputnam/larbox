@@ -1,0 +1,6 @@
+#include "genie_larbox.fcl"
+#include "prodsingle_larbox.fcl"
+
+physics.producers.generator: @local::larbox_genie
+
+process_name: GenieGen

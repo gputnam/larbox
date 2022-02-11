@@ -1,0 +1,22 @@
+#include "genie.fcl"
+
+BEGIN_PROLOG
+
+larbox_genie: {
+  @table::standard_genie
+  BeamName:           "booster"
+  GlobalTimeOffset:   0. #1.6e6                  #larbox reads out 1.6ms before the spill
+  RandomTimeOffset:   0.
+  BeamCenter:    [0., 0., 0.]
+  BeamDirection: [0., 0., 1.]
+  BeamRadius:    100.
+  FluxType:       "histogram"
+  EventsPerSpill: 1
+  GenFlavors:    [14]
+  POTPerSpill: 0 #5e12
+  FluxSearchPaths: "/pnfs/sbn/persistent/users/gputnam/"
+  FluxFiles: ["larbox_flux.root"]
+  TopVolume: "volCryostat"
+} # larbox_genie
+
+END_PROLOG
