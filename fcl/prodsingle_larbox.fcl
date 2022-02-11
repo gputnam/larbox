@@ -53,7 +53,6 @@ services:
   LArG4Parameters:           @local::standard_largeantparameters   # from simulationservices.fcl
   LArVoxelCalculator:        @local::standard_larvoxelcalculator   # from simulationservices.fcl
   MagneticField:             @local::no_mag_larsoft                # from magfield_larsoft.fcl
-  LArFFT:                    @local::standard_larfft               # from larfft.fcl
   SpaceChargeService:        @local::standard_spacecharge          # from spacecharge.fcl
 
   ChannelStatusService: {
