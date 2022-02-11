@@ -35,6 +35,7 @@ fwdir   product_dir scripts
 
 product             version
 larsoft             v09_42_01
+genie_xsec          v3_00_04a
 
 # list products required ONLY for the build
 # any products here must NOT have qualifiers
@@ -44,11 +45,11 @@ end_product_list
 # We now define allowed qualifiers and the corresponding qualifiers for the dependencies.
 # Make the table by adding columns before "notes".
 
-qualifier	larsoft
-e20:debug     e20:debug
-e20:prof      e20:prof
-c7:debug      c7:debug
-c7:prof       c7:prof
+qualifier	larsoft		genie_xsec
+e20:debug     e20:debug		G1810a0211a:k250:e1000
+e20:prof      e20:prof		G1810a0211a:k250:e1000
+c7:debug      c7:debug		G1810a0211a:k250:e1000
+c7:prof       c7:prof		G1810a0211a:k250:e1000
 end_qualifier_list
 
 table_fragment_begin
