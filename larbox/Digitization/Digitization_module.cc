@@ -63,7 +63,7 @@ public:
 
   // Internal Functions
   void MakeNoise(std::vector<double> &v);
-  void MakeSignal(const std::vector<double> &s, std::vector<double> &v);
+  void ConvolveSignal(const std::vector<double> &s, std::vector<double> &v);
 
   ~Digitization();
 
@@ -80,6 +80,7 @@ private:
   std::vector<double> fNoiseSpectrum;
   double fNoiseFreqRandomness;
   double fNoiseScale;
+  bool fConvolveNoise;
 
   // Signal Configuration
   std::string fSignalFileName;
@@ -109,6 +110,7 @@ larbox::Digitization::Digitization(fhicl::ParameterSet const& p)
     fNoiseHistoName(p.get<std::string>("NoiseHistoName")),
     fNoiseFreqRandomness(p.get<double>("NoiseFreqRandomness")),
     fNoiseScale(p.get<double>("NoiseScale")),
+    fConvolveNoise(p.get<bool>("ConvolveNoise")),
     fSignalFileName(p.get<std::string>("SignalFileName")),
     fSignalHistoName(p.get<std::string>("SignalHistoName")),
     fSignalGain(p.get<double>("SignalGain")),
@@ -220,7 +222,7 @@ void larbox::Digitization::produce(art::Event& e)
         }
       }
 
-      MakeSignal(charge, signal);
+      ConvolveSignal(charge, signal);
     }
 
     MakeNoise(noise);
@@ -239,11 +241,36 @@ void larbox::Digitization::produce(art::Event& e)
 
     // Make the wire if configured
     if (fProduceWires) {
+      std::vector<float> w_adcs(n_time_samples, 0.); 
+
+      // What should the noise look like in the Wires?
+      // "Post"-Signal-Processing
+      //
+      // If fConvolveNoise is false, then it is the same as the 
+      // default noise spectrum
+      //
+      // If fConvolveNoise is true, then the noise gets convolved with
+      // the signal response.
+      if (fConvolveNoise) {
+        std::vector<double> filtered_noise(n_time_samples, 0.);
+        ConvolveSignal(noise, filtered_noise);
+
+        for (unsigned tick = 0; tick < n_time_samples; tick++) {
+          w_adcs[tick] = filtered_noise[tick] + signal[tick];
+        }
+      }
+      else {
+        for (unsigned tick = 0; tick < n_time_samples; tick++) {
+          w_adcs[tick] = noise[tick] + signal[tick];
+        }
+
+      }
+
       recob::Wire::RegionsOfInterest_t roiVec;
       
       for (int tick: charge_ticks) {
         std::vector<short> thisrange;
-        std::copy(adcs.begin() + std::max((int)0, tick - fWireROIRange), adcs.begin() + std::min((int)adcs.size(), tick + fWireROIRange), 
+        std::copy(w_adcs.begin() + std::max((int)0, tick - fWireROIRange), w_adcs.begin() + std::min((int)w_adcs.size(), tick + fWireROIRange), 
             std::back_inserter(thisrange));
 
         roiVec.add_range(std::max((int)0, tick - fWireROIRange), std::move(thisrange));
@@ -277,7 +304,7 @@ void larbox::Digitization::produce(art::Event& e)
 
 }
 
-void larbox::Digitization::MakeSignal(const std::vector<double> &s, std::vector<double> &v) {
+void larbox::Digitization::ConvolveSignal(const std::vector<double> &s, std::vector<double> &v) {
   unsigned n_freq_points = s.size()/2 + 1;
 
   // Transform the Signal

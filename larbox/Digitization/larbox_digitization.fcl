@@ -7,6 +7,7 @@ larbox_simwire: {
   NoiseScale: 2e-2
   NoiseFileName:   "larbox_noise.root"
   NoiseHistoName:   "NoiseFreq"    
+  ConvolveNoise: true
   SignalGain: 4e1
   SignalFileName: "larbox_response.root"
   SignalHistoName: "Response"
